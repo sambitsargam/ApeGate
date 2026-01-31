@@ -1,0 +1,6 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "mailbox": "<SEPOLIA_MAILBOX_ADDRESS>",
+  "ism": "<SEPOLIA_ISM_ADDRESS>"
+}
