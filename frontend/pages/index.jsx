@@ -15,9 +15,15 @@ export default function Landing() {
         <nav className="fixed w-full top-0 z-50 bg-black/30 backdrop-blur-md border-b border-cyan-500/20">
           <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
             <h1 className="text-2xl font-black gradient-text">🐵 ApeGate</h1>
-            <div className="space-x-4">
+            <div className="space-x-4 flex items-center flex-wrap justify-end">
+              <Link href="/create-event">
+                <button className="btn-secondary text-sm md:text-base">Create Event</button>
+              </Link>
+              <Link href="/my-events">
+                <button className="btn-secondary text-sm md:text-base">My Events</button>
+              </Link>
               <Link href="/buy">
-                <button className="btn-primary">Get Tickets</button>
+                <button className="btn-primary text-sm md:text-base">Get Tickets</button>
               </Link>
             </div>
           </div>
@@ -34,8 +40,11 @@ export default function Landing() {
               Powered by Espresso finality and Presto cross-chain messaging.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
+              <Link href="/create-event">
+                <button className="btn-primary text-lg">✨ Create Event</button>
+              </Link>
               <Link href="/buy">
-                <button className="btn-primary text-lg">Buy Your First Ticket</button>
+                <button className="btn-primary text-lg">Buy Tickets</button>
               </Link>
               <a href="#features" className="btn-secondary text-lg">Learn More</a>
             </div>
