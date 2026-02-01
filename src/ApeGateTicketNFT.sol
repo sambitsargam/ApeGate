@@ -27,7 +27,9 @@ contract ApeGateTicketNFT is ERC721, Ownable {
         string memory name_,
         string memory symbol_,
         address _espHypERC20
-    ) ERC721(name_, symbol_) {
+    )
+        ERC721(name_, symbol_)
+    {
         espHypERC20 = _espHypERC20;
     }
 
@@ -109,21 +111,24 @@ contract ApeGateTicketNFT is ERC721, Ownable {
         pure
         returns (string memory)
     {
-        if (value == 0) {
-            return "0";
-        }
+        if (value == 0) return "0";
+
         uint256 temp = value;
         uint256 digits;
+
         while (temp != 0) {
             digits++;
             temp /= 10;
         }
+
         bytes memory buffer = new bytes(digits);
+
         while (value != 0) {
             digits -= 1;
             buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
             value /= 10;
         }
+
         return string(buffer);
     }
 
@@ -148,9 +153,8 @@ contract ApeGateTicketNFT is ERC721, Ownable {
             for {
                 let i := 0
             } lt(i, mload(data)) {
-
-            } {
                 i := add(i, 3)
+            } {
                 let input := and(mload(add(data, i)), 0xffffff)
 
                 let out := mload(add(tablePtr, and(shr(18, input), 0x3F)))
