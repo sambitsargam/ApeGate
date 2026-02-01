@@ -1,0 +1,58 @@
+# ============================================================================
+# DEPLOYER ACCOUNTS - First address of anvil with pre-funded balance
+# ============================================================================
+export DEPLOYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+export DEPLOYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+export HYP_KEY=$DEPLOYER_PRIVATE_KEY
+export HYP_ADDRESS=`cast wallet address --private-key=$HYP_KEY`
+
+# ============================================================================
+# CHAIN IDS
+# ============================================================================
+# Source chain id (Espresso/CAFF node)
+export SOURCE_CHAIN_ID=412346
+export SOURCE_CHAIN_NAME=espresso
+
+# Destination chain id (Anvil local node)
+export DESTINATION_CHAIN_ID=31338
+export DESTINATION_CHAIN_NAME=anvil
+
+# ============================================================================
+# RPC CONFIGURATION - Local Node Endpoints
+# ============================================================================
+# Source chain (Espresso CAFF node)
+export RPC_SOURCE_CHAIN_PORT=8547
+export SOURCE_CHAIN_RPC_URL=http://localhost:$RPC_SOURCE_CHAIN_PORT
+export SOURCE_CHAIN_RPC_WS_URL=ws://localhost:$RPC_SOURCE_CHAIN_PORT
+
+# Destination chain (Anvil node)
+export RPC_DESTINATION_CHAIN_PORT=8549
+export DESTINATION_CHAIN_RPC_URL=http://localhost:$RPC_DESTINATION_CHAIN_PORT
+export DESTINATION_CHAIN_RPC_WS_URL=ws://localhost:$RPC_DESTINATION_CHAIN_PORT
+
+# ============================================================================
+# GAS CONFIGURATION
+# ============================================================================
+export GAS_PRICE=1000000000
+export GAS_LIMIT=8000000
+
+# ============================================================================
+# HYPERLANE CONFIGURATION
+# ============================================================================
+# Hyperlane CLI will use these endpoints for deployment
+export HYP_KEY=$DEPLOYER_PRIVATE_KEY
+export HYP_CHAINS_SOURCE_RPC=$SOURCE_CHAIN_RPC_URL
+export HYP_CHAINS_DESTINATION_RPC=$DESTINATION_CHAIN_RPC_URL
+
+# ============================================================================
+# OPTIONAL: Espresso Sequencer Configuration
+# ============================================================================
+# export CAFF_NODE_DEV_PRIV_KEY=0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659
+# export ESPRESSO_APP_CONTRACTS_DATA_FILE_SOURCE=/tmp/source_espresso_app_deploy.json
+# export ESPRESSO_APP_CONTRACTS_DATA_FILE_DESTINATION=/tmp/destination_espresso_app_deploy.json
+
+# ============================================================================
+# ANVIL STATE PERSISTENCE
+# ============================================================================
+# Uncomment to dump state instead of loading (useful for fresh deployment)
+# export DUMP_STATE_INSTEAD_OF_LOAD=true
