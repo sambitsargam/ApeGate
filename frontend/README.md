@@ -2,9 +2,9 @@
 
 Minimal Next.js app demonstrating the flow:
 
-- Connect MetaMask (Sepolia)
+- Connect MetaMask (Local Anvil)
 - Buy a ticket (call `ApeGatePayment.buyTicket`)
-- Poll ApeChain Curtis for minted NFT
+- Poll ApeChain Gary for minted NFT
 - Show QR code (tokenId + wallet address) for IRL check-in
 
 Run:

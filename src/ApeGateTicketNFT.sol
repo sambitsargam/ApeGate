@@ -7,30 +7,31 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract ApeGateTicketNFT is ERC721, Ownable {
     struct Ticket {
         uint256 eventId;
-        string eventName; // optional human label
+        string eventName;
         uint256 timestamp;
     }
 
     uint256 public nextTokenId;
     mapping(uint256 => Ticket) public tickets;
-    address public router; // router contract allowed to mint
+    address public espHypERC20; // EspHypERC20 contract authorized to mint
 
     event TicketMinted(address indexed to, uint256 indexed eventId, uint256 indexed tokenId);
 
-    constructor(string memory name_, string memory symbol_, address _router) ERC721(name_, symbol_) {
-        router = _router;
+    constructor(string memory name_, string memory symbol_, address _espHypERC20) ERC721(name_, symbol_) {
+        espHypERC20 = _espHypERC20;
     }
 
-    modifier onlyRouter() {
-        require(msg.sender == router, "Only router can mint");
+    modifier onlyEspHypERC20() {
+        require(msg.sender == espHypERC20, "Only EspHypERC20 can mint");
         _;
     }
 
-    function setRouter(address _router) external onlyOwner {
-        router = _router;
+    function setEspHypERC20(address _espHypERC20) external onlyOwner {
+        espHypERC20 = _espHypERC20;
     }
 
-    function mint(address to, uint256 eventId, uint256 timestamp) external onlyRouter returns (uint256) {
+    /// @notice Mint a ticket NFT (called by EspHypERC20 after cross-chain message validation)
+    function mint(address to, uint256 eventId, uint256 timestamp) external onlyEspHypERC20 returns (uint256) {
         uint256 tokenId = ++nextTokenId;
         tickets[tokenId] = Ticket({eventId: eventId, eventName: "ApeGate Event", timestamp: timestamp});
         _mint(to, tokenId);
@@ -38,18 +39,27 @@ contract ApeGateTicketNFT is ERC721, Ownable {
         return tokenId;
     }
 
-    /// @notice Basic on-chain tokenURI using plain JSON; can be replaced with IPFS metadata in a production deployment.
+    /// @notice Return on-chain metadata
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "No such token");
         Ticket memory t = tickets[tokenId];
-        // Very small JSON
-        string memory json = string(abi.encodePacked('{"name":"ApeGate Ticket #', _toString(tokenId), '","description":"Event ', _toString(t.eventId), '","attributes":[{"trait_type":"eventId","value":"', _toString(t.eventId), '"}],"timestamp":', _toString(t.timestamp), '}'));
-        return string(abi.encodePacked('data:application/json;base64,', _base64(bytes(json))));
+        string memory json = string(
+            abi.encodePacked(
+                '{"name":"ApeGate Ticket #',
+                _toString(tokenId),
+                '","description":"Event ',
+                _toString(t.eventId),
+                '","attributes":[{"trait_type":"eventId","value":"',
+                _toString(t.eventId),
+                '"},{"trait_type":"timestamp","value":"',
+                _toString(t.timestamp),
+                '"}]}'
+            )
+        );
+        return string(abi.encodePacked("data:application/json;base64,", _base64(bytes(json))));
     }
 
-    // --- helpers ---
     function _toString(uint256 value) internal pure returns (string memory) {
-        // From OpenZeppelin Strings.toString simplified
         if (value == 0) {
             return "0";
         }
@@ -68,11 +78,10 @@ contract ApeGateTicketNFT is ERC721, Ownable {
         return string(buffer);
     }
 
-    /// @dev Base64 encoder (not optimized). Sufficient for demo purposes.
-    string internal constant TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    string internal constant TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     function _base64(bytes memory data) internal pure returns (string memory) {
-        if (data.length == 0) return '';
+        if (data.length == 0) return "";
         string memory table = TABLE;
         uint256 encodedLen = 4 * ((data.length + 2) / 3);
         string memory result = new string(encodedLen + 32);

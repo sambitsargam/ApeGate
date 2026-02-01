@@ -1,0 +1,9 @@
+{
+  "network": "apechain-gary-testnet",
+  "chainId": 3313939,
+  "rpc": "https://apechain-tnet.rpc.caldera.xyz/http",
+  "explorer": "https://apechain-tnet.explorer.caldera.xyz/",
+  "caffeNodeRpc": "https://apechain.caff.testnet.espresso.network/",
+  "mailbox": "0x0000000000000000000000000000000000000000",
+  "ism": "0x0000000000000000000000000000000000000000"
+}

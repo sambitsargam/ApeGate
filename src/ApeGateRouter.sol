@@ -1,32 +1,48 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-interface IInterchainSecurityModule {
-    /// @dev Verify that a given message was correctly signed by validators according to the ISM
-    function verify(bytes calldata metadata, bytes calldata message) external view returns (bool);
+interface IMailbox {
+    function latestDispatchedId() external view returns (bytes32);
 }
 
-interface ITrustedMailbox {
-    /// @dev In Hyperlane, mailbox-like contracts deliver messages. This is a minimal placeholder.
+interface IInterchainSecurityModule {
+    function verify(bytes calldata metadata, bytes calldata message) external view returns (bool);
 }
 
 interface IApeGateTicketNFT {
     function mint(address to, uint256 eventId, uint256 timestamp) external returns (uint256);
 }
 
-contract ApeGateRouter {
-    address public owner;
-    address public mailbox; // trusted mailbox address (set at deploy)
+/// @title EspHypERC20 (Presto Destination Chain)
+/// @notice Receives cross-chain messages on ApeChain Gary, verifies via ISM, and mints NFTs
+/// @dev Validates message integrity via Hyperlane ISM, then calls NFT mint
+contract EspHypERC20 {
+    IMailbox public mailbox;
     IInterchainSecurityModule public ism;
     IApeGateTicketNFT public ticketNFT;
+    address public owner;
+    uint32 public sourceChainId;
+    address public sourceMarketplace; // EspHypNative contract address on source chain
 
-    event CrossChainProcessed(address indexed buyer, uint256 eventId, uint256 tokenId);
+    // Track ProcessId (message hash) to ensure no double-spending
+    mapping(bytes32 => bool) public processedMessages;
 
-    constructor(address _mailbox, address _ism, address _ticketNFT) {
-        owner = msg.sender;
-        mailbox = _mailbox;
+    event ProcessId(bytes32 indexed messageId);
+    event TicketMinted(address indexed buyer, uint256 indexed eventId, uint256 tokenId);
+
+    constructor(
+        address _mailbox,
+        address _ism,
+        address _ticketNFT,
+        uint32 _sourceChainId,
+        address _sourceMarketplace
+    ) {
+        mailbox = IMailbox(_mailbox);
         ism = IInterchainSecurityModule(_ism);
         ticketNFT = IApeGateTicketNFT(_ticketNFT);
+        owner = msg.sender;
+        sourceChainId = _sourceChainId;
+        sourceMarketplace = _sourceMarketplace;
     }
 
     modifier onlyOwner() {
@@ -34,35 +50,52 @@ contract ApeGateRouter {
         _;
     }
 
-    /// @notice Entry point called by Hyperlane relayer when a message is delivered to ApeChain
-    /// @dev This function MUST validate the message via ISM before acting on it. Implementation here shows the structure and leaves room for concrete ISM integration per deployment.
-    function processInbound(bytes calldata metadata, bytes calldata message) external {
-        // Ensure caller is the expected mailbox in production deployments
-        require(msg.sender == mailbox, "Unauthorized mailbox caller");
+    /// @notice Process inbound cross-chain message from Hyperlane relayer
+    /// @dev Called by Hyperlane's mailbox after message delivery. Validates via ISM and mints NFT.
+    /// @param metadata ISM metadata for signature verification
+    /// @param message Encoded message from source chain
+    function handle(
+        uint32 origin,
+        bytes32 sender,
+        bytes calldata metadata,
+        bytes calldata message
+    ) external returns (bytes32) {
+        // Verify origin chain
+        require(origin == sourceChainId, "Invalid source chain");
 
-        // Verify via ISM (trusted validator set). The exact ISM/verification flow depends on the Hyperlane deployment and ISM implementation.
-        bool ok = ism.verify(metadata, message);
-        require(ok, "ISM verification failed");
+        // Verify sender is the EspHypNative contract
+        require(address(uint160(uint256(sender))) == sourceMarketplace, "Invalid sender");
 
-        // Decode the payload: we follow the encoding from the payment contract: abi.encode(destinationRouter, abi.encode(buyer, eventId, timestamp))
-        // The mailbox delivers 'message' which we expect is abi.encode(destinationRouter, innerMessage)
-        (address destRouter, bytes memory inner) = abi.decode(message, (address, bytes));
-        require(destRouter == address(this), "Invalid destination router");
+        // Verify message integrity via ISM (Hyperlane's security module)
+        bool isValid = ism.verify(metadata, message);
+        require(isValid, "ISM verification failed");
 
-        (address buyer, uint256 eventId, uint256 timestamp) = abi.decode(inner, (address, uint256, uint256));
+        // Decode message: (nftRecipient, amount)
+        (address nftRecipient, ) = abi.decode(message, (address, uint256));
+        require(nftRecipient != address(0), "Invalid recipient");
 
-        // Mint the ticket NFT on ApeChain
-        uint256 tokenId = ticketNFT.mint(buyer, eventId, timestamp);
+        // Generate message ID for tracking (ProcessId event)
+        bytes32 messageId = keccak256(abi.encodePacked(origin, sender, message));
+        require(!processedMessages[messageId], "Message already processed");
+        processedMessages[messageId] = true;
 
-        emit CrossChainProcessed(buyer, eventId, tokenId);
+        // Emit ProcessId to match with DispatchId from source chain (event tracking)
+        emit ProcessId(messageId);
+
+        // Mint NFT to recipient (eventId = 1, timestamp = block.timestamp)
+        uint256 tokenId = ticketNFT.mint(nftRecipient, 1, block.timestamp);
+
+        emit TicketMinted(nftRecipient, 1, tokenId);
+
+        return messageId;
     }
 
     function setIsm(address _ism) external onlyOwner {
         ism = IInterchainSecurityModule(_ism);
     }
 
-    function setMailbox(address _mailbox) external onlyOwner {
-        mailbox = _mailbox;
+    function setSourceMarketplace(address _sourceMarketplace) external onlyOwner {
+        sourceMarketplace = _sourceMarketplace;
     }
 
     function setTicketNFT(address _ticketNFT) external onlyOwner {

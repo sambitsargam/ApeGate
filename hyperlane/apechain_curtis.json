@@ -1,8 +1,0 @@
-{
-  "network": "apechain-gary",
-  "chainId": 3313939,
-  "rpc": "https://apechain-tnet.rpc.caldera.xyz/http",
-  "explorer": "https://apechain-tnet.explorer.caldera.xyz/",
-  "mailbox": "<APECHAIN_GARY_MAILBOX_ADDRESS>",
-  "ism": "<APECHAIN_GARY_ISM_ADDRESS>"
-}
